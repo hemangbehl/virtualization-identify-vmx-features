@@ -1,0 +1,85 @@
+
+Try - 1 : [Failed - dual boot Ubuntu]
+	copied the /boot/config_xyz file
+	tried building the kernel using 'make && make install command'
+	gave a few errors so we installed the required libraries
+	ran the command again with 'sudo make -j 6' (as I have 6 processors in an i7) (sudo for explicit root access)
+	this command ran for ~3 hours
+	after restarting the Ubuntu OS, it showed kernel error
+	essentially the kernel was corrupted :(
+	Fortunately the windows OS wasn't affected
+	
+
+Try -2: [Success - VM Ware Workstation 15 on Win 10]
+	Installed VM Ware workstation 15 on windows 10
+	Gave the OS 8 GB of RAM and 40 GB HDD space
+	cloned the github repo using got clone command to get the linux folder
+	created a new folder 'cmpe283' and added the two files in that folder: Makefile and cmpe283-1.c
+	run the command: 
+		make
+	some errors were shown so we installed the required libraries like flex, libdev, msr-tools etc using 'apt get-install'
+	we run the 'make' command again
+	.ko file is created
+	we now try to insert this module into the kernel using
+		insmod cmpe283-1.ko
+	we see the list of messages (like module start/end) by running
+		dmesg
+	we now want to make more changes to the .C file so we remove the module by running
+		rmmod cmpe283-1.ko
+	we now run
+		gedit cmpe283-1.c
+	we edit the file as required
+	and now run 'make' command again to build the ko file
+		insmod cmpe283-1.ko
+		dmesg
+	we see the output showing the VMX capabilities as required.
+	Output shows MSR address as 0x0
+	On closer investigation, we see that MSR bits are not being read properly as the kernel doesn't not have access to read.
+	For this, we enable 'nested VT-x capabilities' on VM Ware Workstation 15 (by editing the existing VM).
+	Doing this fixes our problem and we are able to read the MSR properly.
+
+
+Try -3:
+	
+	Installed VirtualBox on Mac OSX
+	Guarantee the VM with 8 GB RAM and 16 GB Virtual Disk to contain linux repository
+	Clone github repo and insert the original module source under '/cmpe283' with its Makefile
+	Run the following command to compile the kernel module:
+
+	## Compile Kernel module
+	$ make
+	
+	## Insert the Kernel module into module folder and load it
+	$ sudo ln -s cmpe283.ko /var/modules/$(uname -r)/
+	$ sudo modprobe cmpe283
+	
+	## Check Kernel module is loaded
+	$ lsmod | grep cmpe283
+	
+	## Check module loading info
+	$ dmesg
+	
+	## Remove kernel module
+	$ sudo modprobe -r cmpe283
+	
+	The dmesg outputs shows following information:
+	[   41.784989] Run detect_vmx_features
+	[   41.784992] True Controls mask is NOT supported!!!
+	[   41.784994] Pinbased Controls MSR: 0x0
+	...
+	[   41.784999] Procbased Controls MSR: 0x0
+	...
+	[   41.785012] Exit Controls MSR: 0x0
+	...
+	[   41.785020] Entry Controls MSR: 0x0
+	...
+	
+	Which indicates the vmx function is not supported in the VirtualBox VM instance.
+	After investigate on virtualbox's manual and forum, we've known the information that VirtualBox seems only support nested VT-x on AMD CPUs, which is why we cannot get vmx features support on a VirtualBox.
+	[src: https://docs.oracle.com/cd/E97728_01/F12469/html/nested-virt.html]
+
+
+
+
+
+
